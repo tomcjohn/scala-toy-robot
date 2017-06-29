@@ -4,33 +4,7 @@ import scalaz.State
 
 case class Table(bottomLeft: Position, topRight: Position, robots: List[Robot] = List()) {
 
-
-  def doCommand(cmd: String): Robot = {
-    val r: Robot = Robot(Position(1, 3), North)
-
-    val splitCmd: Array[String] = cmd.split(" ")
-    splitCmd(0) match {
-      case "PLACE" =>
-        val placeCmd = splitCmd(1).split(",")
-        val newPos = Position(Integer.parseInt(placeCmd(0)), Integer.parseInt(placeCmd(1)))
-        val newDir = Direction.lookup(placeCmd(2))
-        val newR = Robot(newPos, newDir)
-        if (onTable(newR)) newR else r
-      case "MOVE" =>
-        val newR = r.move
-        if (onTable(newR)) newR else r
-      case "LEFT" => r.left
-      case "RIGHT" => r.right
-      case "REPORT" =>
-        r.report()
-        r
-      case _ =>
-        println("Unknown command, skipping: " + cmd)
-        r
-    }
-  }
-
-  def doDoCommand(cmd: String): State[Robot, Unit] = {
+  def doCommand(cmd: String): State[Option[Robot], Unit] = {
     val splitCmd: Array[String] = cmd.split(" ")
     splitCmd(0) match {
       case "PLACE" =>
@@ -39,19 +13,31 @@ case class Table(bottomLeft: Position, topRight: Position, robots: List[Robot] =
           val newPos = Position(Integer.parseInt(placeCmd(0)), Integer.parseInt(placeCmd(1)))
           val newDir = Direction.lookup(placeCmd(2))
           val newR = Robot(newPos, newDir)
-          if (onTable(newR)) (newR, ()) else (s, ())
+          if (onTable(newR)) (Option(newR), ()) else (s, ())
         })
       case "MOVE" =>
         State(s => {
-          val newR = s.move
-          if (onTable(newR)) (newR, ()) else (s, ())
+          val maybeRobot = s.map(r => r.move)
+          if (maybeRobot.isDefined && onTable(maybeRobot.get)) (Option(maybeRobot.get), ()) else (s, ())
         })
-      case "LEFT" => State(s => (s.left, ()))
-      case "RIGHT" => State(s => (s.right, ()))
-      case "REPORT" => State(s => (s.report(), ()))
-      //      case _ =>
-      //        println("Unknown command, skipping: " + cmd)
-      //        State(s => (_, ()))
+      case "LEFT" =>
+        State(s => {
+          val maybeRobot = s.map(r => r.left)
+          if (maybeRobot.isDefined) (Option(maybeRobot.get), ()) else (s, ())
+        })
+      case "RIGHT" =>
+        State(s => {
+          val maybeRobot = s.map(r => r.right)
+          if (maybeRobot.isDefined) (Option(maybeRobot.get), ()) else (s, ())
+        })
+      case "REPORT" =>
+        State(s => {
+          val maybeRobot = s.map(r => r.report())
+          if (maybeRobot.isDefined) (Option(maybeRobot.get), ()) else (s, ())
+        })
+      case _ =>
+        println("Unknown command, skipping: " + cmd)
+        State(s => (Option.empty, ()))
     }
   }
 

@@ -10,15 +10,13 @@ object Main {
 
     val filename = "robot-test.in"
 
-    val iterator: Iterator[State[Robot, Unit]] = Source.fromFile(filename).getLines.map(t.doDoCommand)
+    val iterator: Iterator[State[Option[Robot], Unit]] = Source.fromFile(filename).getLines.map(t.doCommand)
 
-    val initialRobot = Robot(Position(1, 5), North)
-
-    val finalState: State[Robot, Unit] = iterator.fold(State.state(()))(
+    val finalState: State[Option[Robot], Unit] = iterator.fold(State.state(()))(
       (x, y) => {
         x.flatMap(_ => y)
       }
     )
-    finalState.apply(initialRobot)
+    finalState.apply(Option.empty)
   }
 }
