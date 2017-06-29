@@ -1,47 +1,61 @@
 package com.tomjohn.toyrobot
 
+import scala.util.Try
+import scala.util.matching.Regex
 import scalaz.State
 
 case class Table(bottomLeft: Position, topRight: Position, robots: List[Robot] = List()) {
+
+  private val placePattern: Regex = "(\\d+),(\\d+),(.+)".r
+
+  private object IntParser {
+    def unapply(s: String): Option[Int] = {
+      Try(Integer.parseInt(s)).toOption
+    }
+  }
 
   def doCommand(cmd: String): State[Option[Robot], Unit] = {
     val splitCmd: Array[String] = cmd.split(" ")
     splitCmd(0) match {
       case "PLACE" =>
-        val placeCmd = splitCmd(1).split(",")
-        State(s => {
-          val newPos = Position(Integer.parseInt(placeCmd(0)), Integer.parseInt(placeCmd(1)))
-          val newDir = Direction.lookup(placeCmd(2))
-          val newR = Robot(newPos, newDir)
-          if (onTable(newR)) (Option(newR), ()) else (s, ())
-        })
+        splitCmd(1) match {
+          case placePattern(IntParser(x), IntParser(y), DirectionParser(d)) =>
+            val newR = Robot(Position(x, y), d)
+            if (onTable(newR)) State.put(Option(newR)) else State.state(())
+          case _ => State.state(())
+        }
       case "MOVE" =>
-        State(s => {
-          val maybeRobot = s.map(r => r.move)
-          if (maybeRobot.isDefined && onTable(maybeRobot.get)) (Option(maybeRobot.get), ()) else (s, ())
-        })
+        adjustRobot(_.move, onTable)
       case "LEFT" =>
-        State(s => {
-          val maybeRobot = s.map(r => r.left)
-          if (maybeRobot.isDefined) (Option(maybeRobot.get), ()) else (s, ())
-        })
+        adjustRobot(_.left)
       case "RIGHT" =>
-        State(s => {
-          val maybeRobot = s.map(r => r.right)
-          if (maybeRobot.isDefined) (Option(maybeRobot.get), ()) else (s, ())
-        })
+        adjustRobot(_.right)
       case "REPORT" =>
-        State(s => {
-          val maybeRobot = s.map(r => r.report())
-          if (maybeRobot.isDefined) (Option(maybeRobot.get), ()) else (s, ())
-        })
+        adjustRobot(_.report())
       case _ =>
-        println("Unknown command, skipping: " + cmd)
-        State(s => (Option.empty, ()))
+        State.state(())
     }
   }
 
-  def onTable(r: Robot): Boolean = {
+  private def adjustRobot(action: Robot => Robot, accept: Option[Robot] => Boolean = always): State[Option[Robot], Unit] = {
+    for {
+      maybeRobot <- State.gets((y: Option[Robot]) => y.map(action))
+      _ <- if (accept(maybeRobot)) State.put(maybeRobot) else State.state[Option[Robot], Unit](())
+    } yield ()
+  }
+
+  private def always(r: Option[Robot]): Boolean = {
+    true
+  }
+
+  private def onTable(o: Option[Robot]): Boolean = {
+    o match {
+      case None => false
+      case Some(r) => onTable(r)
+    }
+  }
+
+  private def onTable(r: Robot): Boolean = {
     r.p.x >= bottomLeft.x && r.p.x <= topRight.x &&
       r.p.y >= bottomLeft.y && r.p.y <= topRight.y
   }

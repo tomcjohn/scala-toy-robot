@@ -38,13 +38,14 @@ case object West extends Direction {
   def move(p: Position): Position = Position(p.x - 1, p.y)
 }
 
-object Direction {
-  def lookup(name: String): Direction = {
+object DirectionParser {
+  def unapply(name: String): Option[Direction] = {
     name.toLowerCase match {
-      case "north" => North
-      case "south" => South
-      case "east" => East
-      case "west" => West
+      case "north" => Some(North)
+      case "south" => Some(South)
+      case "east" => Some(East)
+      case "west" => Some(West)
+      case _ => None
     }
   }
 }
