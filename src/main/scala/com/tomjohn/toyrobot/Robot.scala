@@ -14,7 +14,8 @@ case class Robot(p: Position, d: Direction) {
     Robot(p, d.right())
   }
 
-  def report(): Unit = {
+  def report(): Robot = {
     println("(" + p.toString + "," + d.toString + ")")
+    this
   }
 }
