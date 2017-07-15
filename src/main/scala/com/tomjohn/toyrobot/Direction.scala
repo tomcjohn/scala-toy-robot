@@ -2,7 +2,9 @@ package com.tomjohn.toyrobot
 
 sealed trait Direction {
   def left(): Direction
+
   def right(): Direction
+
   def move(p: Position): Position
 }
 
@@ -36,4 +38,15 @@ case object West extends Direction {
   def right(): Direction = North
 
   def move(p: Position): Position = Position(p.x - 1, p.y)
+}
+
+object Direction {
+  def lookup(name: String): Direction = {
+    name match {
+      case "NORTH" => North
+      case "SOUTH" => South
+      case "EAST" => East
+      case "WEST" => West
+    }
+  }
 }
