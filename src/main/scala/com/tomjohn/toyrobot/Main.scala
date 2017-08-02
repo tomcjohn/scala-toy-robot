@@ -5,10 +5,11 @@ import scala.io.Source
 object Main {
 
   def main(args: Array[String]): Unit = {
-    val r: Robot = Robot(Position(1, 3), North)
+    val table: Table = Table(Position(0, 0), Position(5, 5))
 
     val filename = "robot-test.in"
     val lines = Source.fromFile(filename).getLines
-    lines.foreach(l => doCommand(r, l))
+
+    lines.foreach(l => table.doCommand(l))
   }
 }

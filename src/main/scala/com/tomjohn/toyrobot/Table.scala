@@ -4,11 +4,7 @@ import scalaz.State
 
 case class Table(bottomLeft: Position, topRight: Position) {
 
-  val flow: State[Robot, Unit] = ???
-
-  def doCommand(r: Robot, cmd: String): Robot = {
-    val value: State[Robot, Unit] = State.get()
-
+  def doCommand(cmd: String): State[Option[Robot], Unit] = {
     val splitCmd = cmd.split(" ")
     splitCmd(0) match {
       case "PLACE" =>
@@ -16,19 +12,31 @@ case class Table(bottomLeft: Position, topRight: Position) {
         val newX = Integer.parseInt(splitPlaceCmd(0))
         val newY = Integer.parseInt(splitPlaceCmd(1))
         val newDir = Direction.lookup(splitPlaceCmd(2))
-        Robot(Position(newX, newY), newDir)
+        val newRobot = Robot(Position(newX, newY), newDir)
+        adjustRobot(_ => newRobot)
       case "LEFT" =>
-        Robot(r.p, r.d.left())
+        adjustRobot(_.left())
       case "RIGHT" =>
-        Robot(r.p, r.d.right())
+        adjustRobot(_.right())
       case "MOVE" =>
-        Robot(r.d.move(r.p), r.d)
+        adjustRobot(_.move())
       case "REPORT" =>
-        r.report()
+        adjustRobot(_.report())
       case _ =>
         println("Unrecognised command, skipped: " + splitCmd(0))
-        r
+        State.state(())
     }
+  }
+
+  private def adjustRobot(action: Robot => Robot, accept: Option[Robot] => Boolean = always): State[Option[Robot], Unit] = {
+    for {
+      maybeRobot <- State.gets((o: Option[Robot]) => o.map(action))
+      _ <- if (accept(maybeRobot)) State.put(maybeRobot) else State.state[Option[Robot], Unit](())
+    } yield ()
+  }
+
+  private def always(r: Option[Robot]): Boolean = {
+    true
   }
 
   def onTable(r: Robot): Boolean = {
