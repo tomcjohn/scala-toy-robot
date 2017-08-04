@@ -23,15 +23,14 @@ case class Table(bottomLeft: Position, topRight: Position) {
       case "REPORT" =>
         adjustRobot(_.report())
       case _ =>
-        println("unrecognised command, skipped: " + splitCmd(0))
         State.state(())
     }
   }
 
   private def adjustRobot(action: Robot => Robot, accept: Option[Robot] => Boolean = always): State[Option[Robot], Unit] = {
     for {
-      maybeRobot: Option[Robot] <- State.gets((o: Option[Robot]) => o.map(action))
-      _ <- if (accept(maybeRobot)) State.put(maybeRobot) else State.state(())
+      maybeRobot <- State.gets((o: Option[Robot]) => o.map(action))
+      _ <- if (accept(maybeRobot)) State.put(maybeRobot) else State.state[Option[Robot], Unit](())
     } yield ()
   }
 
