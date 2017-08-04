@@ -1,6 +1,7 @@
 package com.tomjohn.toyrobot
 
 import scala.io.Source
+import scalaz.State
 
 object Main {
 
@@ -10,6 +11,11 @@ object Main {
     val filename = "robot-test.in"
     val lines = Source.fromFile(filename).getLines
 
-    lines.foreach(l => table.doCommand(l))
+    val finalState: State[Option[Robot], Unit] = lines.map(table.doCommand).fold(State.state())(
+      (x, y) => {
+        x.flatMap(_ => y)
+      }
+    )
+    finalState.apply(Some(Robot(Position(1,1), North)))
   }
 }

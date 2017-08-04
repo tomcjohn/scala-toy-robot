@@ -5,6 +5,7 @@ import scalaz.State
 case class Table(bottomLeft: Position, topRight: Position) {
 
   def doCommand(cmd: String): State[Option[Robot], Unit] = {
+
     val splitCmd = cmd.split(" ")
     splitCmd(0) match {
       case "PLACE" =>
@@ -13,13 +14,13 @@ case class Table(bottomLeft: Position, topRight: Position) {
         val newY = Integer.parseInt(splitPlaceCmd(1))
         val newDir = Direction.lookup(splitPlaceCmd(2))
         val newRobot = Robot(Position(newX, newY), newDir)
-        adjustRobot(_ => newRobot)
+        adjustRobot(_ => newRobot, onTable)
       case "LEFT" =>
-        adjustRobot(_.left())
+        adjustRobot(_.left)
       case "RIGHT" =>
-        adjustRobot(_.right())
+        adjustRobot(_.right)
       case "MOVE" =>
-        adjustRobot(_.move())
+        adjustRobot(_.move, onTable)
       case "REPORT" =>
         adjustRobot(_.report())
       case _ =>
@@ -37,6 +38,15 @@ case class Table(bottomLeft: Position, topRight: Position) {
 
   private def always(r: Option[Robot]): Boolean = {
     true
+  }
+
+  def onTable(o: Option[Robot]): Boolean = {
+    o match {
+      case Some(r) =>
+        onTable(r)
+      case _ =>
+        false
+    }
   }
 
   def onTable(r: Robot): Boolean = {
