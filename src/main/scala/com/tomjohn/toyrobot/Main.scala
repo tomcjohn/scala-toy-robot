@@ -10,6 +10,7 @@ object Main {
     val filename = "robot-test.in"
     val lines = Source.fromFile(filename).getLines
 
-    lines.foreach(t.doCommand)
+    val r = Robot(Position(1, 3), North)
+    lines.foreach(l => t.doCommand(r, l))
   }
 }

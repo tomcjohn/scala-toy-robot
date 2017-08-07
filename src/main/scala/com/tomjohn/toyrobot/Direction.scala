@@ -29,3 +29,14 @@ case object West extends Direction {
   def left: Direction = South
   def right: Direction = North
 }
+
+object Direction {
+  def lookup(name: String): Direction = {
+    name match {
+      case "NORTH" => North
+      case "SOUTH" => South
+      case "EAST" => East
+      case "WEST" => West
+    }
+  }
+}
