@@ -13,9 +13,9 @@ case class Table(bottomLeft: Position, topRight: Position) {
         val newY = Integer.parseInt(placeCmd(1))
         val newDir = Direction.lookup(placeCmd(2))
         val newRobot = Robot(Position(newX, newY), newDir)
-        adjustRobot(_ => newRobot, onTable)
+        if (onTable(newRobot)) State.put(Some(newRobot)) else State.state(())
       case "MOVE" =>
-        adjustRobot(_.move)
+        adjustRobot(_.move, onTable)
       case "LEFT" =>
         adjustRobot(_.left)
       case "RIGHT" =>
